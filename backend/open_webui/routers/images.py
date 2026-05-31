@@ -165,6 +165,10 @@ class DirectConnectionsForm(BaseModel):
     OPENAI_API_CONFIGS: dict = {}
 
 
+class DirectImageModelsForm(BaseModel):
+    direct_connections: DirectConnectionsForm | None = None
+
+
 def get_direct_connections_from_payload(form_data=None, metadata=None) -> Optional[DirectConnectionsForm]:
     direct_connections = None
     if form_data is not None:
@@ -523,6 +527,79 @@ async def get_models(request: Request, user=Depends(get_verified_user)):
             )
     except Exception as e:
         raise HTTPException(status_code=400, detail=ERROR_MESSAGES.DEFAULT(e))
+
+
+@router.post('/models/direct')
+async def get_direct_models(request: Request, form_data: DirectImageModelsForm, user=Depends(get_verified_user)):
+    direct_connections = get_direct_connections_from_payload(form_data)
+    if not request.app.state.config.ENABLE_DIRECT_CONNECTIONS or not direct_connections:
+        return []
+
+    urls = direct_connections.OPENAI_API_BASE_URLS or []
+    keys = direct_connections.OPENAI_API_KEYS or []
+    configs = direct_connections.OPENAI_API_CONFIGS or {}
+    models = []
+    seen = set()
+
+    for idx, base_url in enumerate(urls):
+        if not base_url:
+            continue
+
+        api_config = configs.get(str(idx), configs.get(base_url, {})) or {}
+        if api_config.get('enable', True) is False:
+            continue
+
+        prefix_id = api_config.get('prefix_id')
+        model_ids = api_config.get('model_ids') or []
+        if model_ids:
+            candidate_models = [{'id': model_id, 'name': model_id} for model_id in model_ids]
+        else:
+            key = keys[idx] if idx < len(keys) else ''
+            headers, cookies = await get_headers_and_cookies(
+                request,
+                base_url,
+                key,
+                api_config,
+                user=user,
+            )
+            url = f'{base_url.rstrip("/")}/models'
+            if api_config.get('api_version'):
+                url = f'{url}?api-version={api_config.get("api_version")}'
+
+            try:
+                session = await get_session()
+                async with session.get(
+                    url=url,
+                    headers=headers,
+                    cookies=cookies,
+                    ssl=AIOHTTP_CLIENT_SESSION_SSL,
+                ) as r:
+                    r.raise_for_status()
+                    res = await r.json()
+            except Exception as e:
+                log.debug(f'Failed to fetch direct image models from {base_url}: {e}')
+                continue
+
+            candidate_models = res.get('data', []) if isinstance(res, dict) else []
+
+        for model in candidate_models:
+            model_id = model.get('id') if isinstance(model, dict) else str(model)
+            if not model_id:
+                continue
+
+            display_id = f'{prefix_id}.{model_id}' if prefix_id and not model_id.startswith(f'{prefix_id}.') else model_id
+            if display_id in seen:
+                continue
+
+            seen.add(display_id)
+            models.append(
+                {
+                    'id': display_id,
+                    'name': model.get('name', model_id) if isinstance(model, dict) else model_id,
+                }
+            )
+
+    return models
 
 
 class CreateImageForm(BaseModel):

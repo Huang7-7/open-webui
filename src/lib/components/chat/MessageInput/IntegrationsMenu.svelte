@@ -62,7 +62,7 @@
 
 	let tools = null;
 	let imageModels: { id: string; name?: string }[] = [];
-	const imageSizeOptions = ['', '1024x1024', '1024x1536', '1536x1024', '512x512', '768x768'];
+	const imageSizeOptions = ['1536x1024', '2048x1536', '3840x2160'];
 
 	$: if (show) {
 		init();
@@ -106,10 +106,17 @@
 		selectedToolIds = selectedToolIds.filter((id) => Object.keys(tools).includes(id));
 
 		if (showImageGenerationButton && imageModels.length === 0) {
-			imageModels = await getImageGenerationModels(localStorage.token).catch((err) => {
-				console.error(err);
-				return [];
-			});
+			const directConnections =
+				$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+					? $settings.directConnections
+					: null;
+
+			imageModels = await getImageGenerationModels(localStorage.token, directConnections).catch(
+				(err) => {
+					console.error(err);
+					return getImageGenerationModels(localStorage.token).catch(() => []);
+				}
+			);
 		}
 	};
 </script>
@@ -299,7 +306,7 @@
 										class="mt-1 w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-gray-100 outline-hidden"
 										bind:value={imageGenerationModel}
 										list="image-generation-model-options"
-										placeholder={$i18n.t('Default')}
+										placeholder={$i18n.t('Default') + ' / gpt-image-2'}
 									/>
 									<datalist id="image-generation-model-options">
 										{#each imageModels as model}
@@ -314,8 +321,9 @@
 										class="mt-1 w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-gray-100 outline-hidden"
 										bind:value={imageGenerationSize}
 									>
+										<option value="">{$i18n.t('Default')}</option>
 										{#each imageSizeOptions as size}
-											<option value={size}>{size || $i18n.t('Default')}</option>
+											<option value={size}>{size}</option>
 										{/each}
 									</select>
 								</label>

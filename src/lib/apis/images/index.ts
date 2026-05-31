@@ -164,16 +164,26 @@ export const updateImageGenerationConfig = async (token: string = '', config: ob
 	return res;
 };
 
-export const getImageGenerationModels = async (token: string = '') => {
+export const getImageGenerationModels = async (
+	token: string = '',
+	directConnections: object | null = null
+) => {
 	let error = null;
 
-	const res = await fetch(`${IMAGES_API_BASE_URL}/models`, {
-		method: 'GET',
+	const res = await fetch(`${IMAGES_API_BASE_URL}/models${directConnections ? '/direct' : ''}`, {
+		method: directConnections ? 'POST' : 'GET',
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
 			...(token && { authorization: `Bearer ${token}` })
-		}
+		},
+		...(directConnections
+			? {
+					body: JSON.stringify({
+						direct_connections: directConnections
+					})
+				}
+			: {})
 	})
 		.then(async (res) => {
 			if (!res.ok) throw await res.json();
