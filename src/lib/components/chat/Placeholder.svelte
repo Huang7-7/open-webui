@@ -53,6 +53,8 @@
 	export let showCommands = false;
 
 	export let imageGenerationEnabled = false;
+	export let imageGenerationModel = '';
+	export let imageGenerationSize = '';
 	export let codeInterpreterEnabled = false;
 	export let webSearchEnabled = false;
 
@@ -219,6 +221,8 @@
 					bind:selectedToolIds
 					bind:selectedFilterIds
 					bind:imageGenerationEnabled
+					bind:imageGenerationModel
+					bind:imageGenerationSize
 					bind:codeInterpreterEnabled
 					bind:webSearchEnabled
 					bind:atSelectedModel

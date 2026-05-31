@@ -154,6 +154,8 @@
 	let pendingOAuthTools = [];
 
 	let imageGenerationEnabled = false;
+	let imageGenerationModel = '';
+	let imageGenerationSize = '';
 	let webSearchEnabled = false;
 	let codeInterpreterEnabled = false;
 
@@ -245,6 +247,8 @@
 						selectedFilterIds = input.selectedFilterIds;
 						webSearchEnabled = input.webSearchEnabled;
 						imageGenerationEnabled = input.imageGenerationEnabled;
+						imageGenerationModel = input.imageGenerationModel ?? '';
+						imageGenerationSize = input.imageGenerationSize ?? '';
 						codeInterpreterEnabled = input.codeInterpreterEnabled;
 					}
 				} catch (e) {}
@@ -844,6 +848,8 @@
 						selectedFilterIds = input.selectedFilterIds;
 						webSearchEnabled = input.webSearchEnabled;
 						imageGenerationEnabled = input.imageGenerationEnabled;
+						imageGenerationModel = input.imageGenerationModel ?? '';
+						imageGenerationSize = input.imageGenerationSize ?? '';
 						codeInterpreterEnabled = input.codeInterpreterEnabled;
 					}
 				} catch (e) {}
@@ -2432,6 +2438,12 @@
 				($settings?.directConnections ?? null)
 					? { direct_connections: $settings.directConnections }
 					: {}),
+				...(features?.image_generation && imageGenerationModel.trim()
+					? { image_generation_model: imageGenerationModel.trim() }
+					: {}),
+				...(features?.image_generation && imageGenerationSize
+					? { image_generation_size: imageGenerationSize }
+					: {}),
 				features,
 				variables: {
 					...getPromptVariables(
@@ -3111,6 +3123,8 @@
 									bind:selectedToolIds
 									bind:selectedFilterIds
 									bind:imageGenerationEnabled
+									bind:imageGenerationModel
+									bind:imageGenerationSize
 									bind:codeInterpreterEnabled
 									{pendingOAuthTools}
 									bind:webSearchEnabled
@@ -3192,6 +3206,8 @@
 									bind:selectedToolIds
 									bind:selectedFilterIds
 									bind:imageGenerationEnabled
+									bind:imageGenerationModel
+									bind:imageGenerationSize
 									bind:codeInterpreterEnabled
 									bind:webSearchEnabled
 									bind:atSelectedModel

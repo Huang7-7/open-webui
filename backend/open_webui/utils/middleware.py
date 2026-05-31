@@ -1874,11 +1874,19 @@ async def chat_image_generation_handler(request: Request, form_data: dict, extra
         try:
             images = await image_generations(
                 request=request,
-                form_data=CreateImageForm(**{'prompt': prompt}),
+                form_data=CreateImageForm(
+                    **{
+                        'prompt': prompt,
+                        'model': metadata.get('image_generation_model') or None,
+                        'size': metadata.get('image_generation_size') or None,
+                    }
+                ),
                 metadata={
                     'chat_id': metadata.get('chat_id', None),
                     'message_id': metadata.get('message_id', None),
                     'direct_connections': metadata.get('direct_connections', None),
+                    'image_generation_model': metadata.get('image_generation_model', None),
+                    'image_generation_size': metadata.get('image_generation_size', None),
                 },
                 user=user,
             )

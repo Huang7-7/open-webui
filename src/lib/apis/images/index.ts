@@ -199,7 +199,9 @@ export const getImageGenerationModels = async (token: string = '') => {
 export const imageGenerations = async (
 	token: string = '',
 	prompt: string,
-	directConnections: object | null = null
+	directConnections: object | null = null,
+	model: string | null = null,
+	size: string | null = null
 ) => {
 	let error = null;
 
@@ -212,6 +214,8 @@ export const imageGenerations = async (
 		},
 		body: JSON.stringify({
 			prompt: prompt,
+			...(model ? { model } : {}),
+			...(size ? { size } : {}),
 			...(directConnections ? { direct_connections: directConnections } : {})
 		})
 	})

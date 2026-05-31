@@ -134,6 +134,8 @@
 	export let selectedFilterIds = [];
 
 	export let imageGenerationEnabled = false;
+	export let imageGenerationModel = '';
+	export let imageGenerationSize = '';
 	export let webSearchEnabled = false;
 	export let codeInterpreterEnabled = false;
 
@@ -178,6 +180,8 @@
 		selectedToolIds,
 		selectedFilterIds,
 		imageGenerationEnabled,
+		imageGenerationModel,
+		imageGenerationSize,
 		webSearchEnabled,
 		codeInterpreterEnabled
 	});
@@ -1683,6 +1687,8 @@
 											bind:selectedFilterIds
 											bind:webSearchEnabled
 											bind:imageGenerationEnabled
+											bind:imageGenerationModel
+											bind:imageGenerationSize
 											bind:codeInterpreterEnabled
 											closeOnOutsideClick={integrationsMenuCloseOnOutsideClick}
 											onShowValves={(e) => {

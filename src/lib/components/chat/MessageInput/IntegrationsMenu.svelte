@@ -15,6 +15,7 @@
 	import { getOAuthClientAuthorizationUrl } from '$lib/apis/configs';
 	import { deleteOAuthSession } from '$lib/apis/auths';
 	import { getTools } from '$lib/apis/tools';
+	import { getImageGenerationModels } from '$lib/apis/images';
 
 	import { toast } from 'svelte-sonner';
 
@@ -47,6 +48,8 @@
 	export let webSearchEnabled = false;
 	export let showImageGenerationButton = false;
 	export let imageGenerationEnabled = false;
+	export let imageGenerationModel = '';
+	export let imageGenerationSize = '';
 	export let showCodeInterpreterButton = false;
 	export let codeInterpreterEnabled = false;
 
@@ -58,6 +61,8 @@
 	let tab = '';
 
 	let tools = null;
+	let imageModels: { id: string; name?: string }[] = [];
+	const imageSizeOptions = ['', '1024x1024', '1024x1536', '1536x1024', '512x512', '768x768'];
 
 	$: if (show) {
 		init();
@@ -99,6 +104,13 @@
 		}
 
 		selectedToolIds = selectedToolIds.filter((id) => Object.keys(tools).includes(id));
+
+		if (showImageGenerationButton && imageModels.length === 0) {
+			imageModels = await getImageGenerationModels(localStorage.token).catch((err) => {
+				console.error(err);
+				return [];
+			});
+		}
 	};
 </script>
 
@@ -278,6 +290,37 @@
 								</div>
 							</button>
 						</Tooltip>
+
+						{#if imageGenerationEnabled}
+							<div class="px-3 pb-2 pt-1 space-y-2">
+								<label class="block text-xs text-gray-500 dark:text-gray-400">
+									{$i18n.t('Image Model')}
+									<input
+										class="mt-1 w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-gray-100 outline-hidden"
+										bind:value={imageGenerationModel}
+										list="image-generation-model-options"
+										placeholder={$i18n.t('Default')}
+									/>
+									<datalist id="image-generation-model-options">
+										{#each imageModels as model}
+											<option value={model.id}>{model.name ?? model.id}</option>
+										{/each}
+									</datalist>
+								</label>
+
+								<label class="block text-xs text-gray-500 dark:text-gray-400">
+									{$i18n.t('Image Size')}
+									<select
+										class="mt-1 w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-gray-100 outline-hidden"
+										bind:value={imageGenerationSize}
+									>
+										{#each imageSizeOptions as size}
+											<option value={size}>{size || $i18n.t('Default')}</option>
+										{/each}
+									</select>
+								</label>
+							</div>
+						{/if}
 					{/if}
 
 					{#if showCodeInterpreterButton}
