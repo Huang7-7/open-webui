@@ -62,7 +62,7 @@
 
 	let tools = null;
 	let imageModels: { id: string; name?: string }[] = [];
-	const imageSizeOptions = ['1536x1024', '2048x1536', '3840x2160'];
+	const imageSizeOptions = ['1K', '2K', '4K'];
 
 	$: if (show) {
 		init();

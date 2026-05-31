@@ -615,6 +615,34 @@ class CreateImageForm(BaseModel):
 GenerateImageForm = CreateImageForm  # Alias for backward compatibility
 
 
+IMAGE_GENERATION_SIZE_SPECS = {
+    '1K': {
+        'size': '1536x1024',
+        'width': 1536,
+        'height': 1024,
+        'gemini': {'imageSize': '1K', 'aspectRatio': '3:2'},
+    },
+    '2K': {
+        'size': '2048x1536',
+        'width': 2048,
+        'height': 1536,
+        'gemini': {'imageSize': '2K', 'aspectRatio': '4:3'},
+    },
+    '4K': {
+        'size': '3840x2160',
+        'width': 3840,
+        'height': 2160,
+        'gemini': {'imageSize': '4K', 'aspectRatio': '16:9'},
+    },
+}
+
+
+def get_image_generation_size_spec(size: str | None) -> dict | None:
+    if not size:
+        return None
+    return IMAGE_GENERATION_SIZE_SPECS.get(size)
+
+
 def _is_same_origin(url: str, base_url: str) -> bool:
     """Compare scheme + hostname + port of two URLs.
 
@@ -744,12 +772,14 @@ async def image_generations(
     # This is only relevant when the user has set IMAGE_SIZE to 'auto' with an
     # image model other than gpt-image-1, which is warned about on settings save
 
-    size = '512x512'
-    if request.app.state.config.IMAGE_SIZE and 'x' in request.app.state.config.IMAGE_SIZE:
-        size = request.app.state.config.IMAGE_SIZE
+    requested_size = form_data.size or request.app.state.config.IMAGE_SIZE
+    size_spec = get_image_generation_size_spec(requested_size)
 
-    if form_data.size and 'x' in form_data.size:
-        size = form_data.size
+    size = '512x512'
+    if size_spec:
+        size = size_spec['size']
+    elif requested_size and 'x' in requested_size:
+        size = requested_size
 
     width, height = tuple(map(int, size.split('x')))
 
@@ -807,8 +837,8 @@ async def image_generations(
                 'prompt': form_data.prompt,
                 'n': form_data.n,
                 **(
-                    {'size': form_data.size or request.app.state.config.IMAGE_SIZE}
-                    if (form_data.size or request.app.state.config.IMAGE_SIZE)
+                    {'size': size_spec['size'] if size_spec else requested_size}
+                    if requested_size
                     else {}
                 ),
                 **(
@@ -859,6 +889,7 @@ async def image_generations(
             }
 
             data = {}
+            gemini_size_params = size_spec.get('gemini', {}) if size_spec else {}
 
             if (
                 request.app.state.config.IMAGES_GEMINI_ENDPOINT_METHOD == ''
@@ -870,12 +901,15 @@ async def image_generations(
                     'parameters': {
                         'sampleCount': form_data.n,
                         'outputOptions': {'mimeType': 'image/png'},
+                        **gemini_size_params,
                     },
                 }
 
             elif request.app.state.config.IMAGES_GEMINI_ENDPOINT_METHOD == 'generateContent':
                 model = f'{model}:generateContent'
                 data = {'contents': [{'parts': [{'text': form_data.prompt}]}]}
+                if gemini_size_params:
+                    data['generationConfig'] = {'imageConfig': gemini_size_params}
 
             session = await get_session()
             async with session.post(
