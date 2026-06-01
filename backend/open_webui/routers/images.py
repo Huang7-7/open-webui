@@ -620,7 +620,7 @@ IMAGE_GENERATION_SIZE_SPECS = {
         'size': '1024x768',
         'width': 1024,
         'height': 768,
-        'gemini': {'imageSize': '1K', 'aspectRatio': '3:2'},
+        'gemini': {'imageSize': '1K', 'aspectRatio': '4:3'},
     },
     '2K': {
         'size': '2048x1536',
