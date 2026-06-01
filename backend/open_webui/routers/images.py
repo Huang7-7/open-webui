@@ -617,9 +617,9 @@ GenerateImageForm = CreateImageForm  # Alias for backward compatibility
 
 IMAGE_GENERATION_SIZE_SPECS = {
     '1K': {
-        'size': '1536x1024',
-        'width': 1536,
-        'height': 1024,
+        'size': '1024x768',
+        'width': 1024,
+        'height': 768,
         'gemini': {'imageSize': '1K', 'aspectRatio': '3:2'},
     },
     '2K': {
